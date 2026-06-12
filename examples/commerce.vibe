@@ -1,0 +1,50 @@
+app CommerceDemo {
+  vibe {
+    brand "calm editorial"
+    ux speed trust
+    a11y wcag-aa
+    perf { lcp < 2500, apiP95 < 300 }
+    security regulated
+  }
+
+  style {
+    color.primary = "#0B57D0"
+    radius.md = 12
+    density = "comfy"
+    motion = "subtle"
+  }
+
+  model Product {
+    id uuid @id
+    slug string @unique
+    title string
+    price decimal
+    featured boolean = false
+    createdAt datetime @default(now)
+  }
+
+  api GET "/api/products" {
+    query {
+      q?: string
+      limit?: int = 12
+    }
+    returns Product[]
+    auth public
+  }
+
+  component ProductCard(product: Product) {
+    image "/images/{product.slug}.jpg"
+    heading product.title
+    price product.price
+    button "Add to cart"
+  }
+
+  page Home "/" {
+    load featuredProducts from GET "/api/products" with { limit: 8 }
+    hero {
+      title "Objects for a quieter desk"
+      cta "Shop featured"
+    }
+    section FeaturedGrid uses ProductCard for featuredProducts
+  }
+}

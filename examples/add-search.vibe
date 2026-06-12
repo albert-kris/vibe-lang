@@ -1,0 +1,43 @@
+// Vibe Change Language 示例：
+// 中文需求 “给首页商品列表加搜索框，按标题搜索，别动支付代码，改完要跑测试”
+// 由 AI（或工程师）落成下面这份可审查、可执行的变更意图文件。
+
+change "add product search" {
+  goal "在首页商品列表增加按标题搜索的功能"
+
+  scope {
+    allow "src/app/page.tsx"
+    allow "src/components/**"
+    allow "src/app/api/products/**"
+    allow "src/lib/queries.ts"
+
+    forbid "src/app/api/payment/**"
+    forbid "prisma/**"
+  }
+
+  requirements {
+    add "首页顶部显示搜索输入框"
+    add "输入关键词后按商品 title 过滤（不区分大小写）"
+    add "搜索参数通过 URL query 参数 q 表示"
+    add "空关键词显示全部商品"
+  }
+
+  style {
+    "复用现有 vibe-* CSS 类，不引入新设计系统"
+    "不加不必要的动画"
+  }
+
+  constraints {
+    "不新增 npm 依赖"
+    "不做数据库 migration"
+    "保持 GET /api/products 的现有响应结构不变"
+  }
+
+  acceptance {
+    test "输入关键词后商品列表只剩匹配项"
+    test "刷新页面后搜索词仍保留在 URL 中"
+    run "npx tsc --noEmit"
+  }
+
+  rollback revert
+}

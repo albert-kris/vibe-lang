@@ -1,0 +1,11 @@
+{
+  "projectName": "Vibe",
+  "languages": [
+    {
+      "id": "vibe",
+      "grammar": "src/language/vibe.langium",
+      "fileExtensions": [".vibe"]
+    }
+  ],
+  "out": "src/language/generated"
+}

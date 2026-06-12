@@ -1,0 +1,24 @@
+app BadDemo {
+  vibe {
+    security regulated
+  }
+
+  model Product {
+    slug string @unique
+    title string
+  }
+
+  api GET "/api/products" {
+    returns Product[]
+  }
+
+  component ProductCard(product: Product) {
+    heading product.title
+    text product.missingField
+  }
+
+  page Home "/" {
+    load items from GET "/api/missing"
+    section Grid uses ProductCard for nothing
+  }
+}

@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vibe — The Language for AI-Driven Code Maintenance</title>
+<meta name="description" content="Vibe turns AI code changes into reviewable, verifiable engineering. Encode change intent, file boundaries, and acceptance criteria in versionable Vibefiles.">
+<style>
+  :root {
+    --navy: #0f1b2d;
+    --navy-2: #16263e;
+    --ink: #1c2733;
+    --body: #46556a;
+    --amber: #ffb937;
+    --amber-dark: #c98200;
+    --blue: #2f6fed;
+    --bg: #ffffff;
+    --bg-soft: #f4f7fb;
+    --border: #e3e9f2;
+    --code-bg: #0d1726;
+    --green: #3fb96f;
+    --red: #ef5d5d;
+    --mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: ui-sans-serif, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.6;
+  }
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- nav ---------- */
+  nav {
+    background: var(--navy);
+    position: sticky; top: 0; z-index: 50;
+    border-bottom: 3px solid var(--amber);
+  }
+  .nav-inner {
+    display: flex; align-items: center; gap: 28px;
+    max-width: 1080px; margin: 0 auto; padding: 14px 24px;
+  }
+  .logo {
+    font-weight: 800; font-size: 1.35rem; color: #fff; letter-spacing: -0.5px;
+  }
+  .logo .tilde { color: var(--amber); }
+  .nav-links { display: flex; gap: 22px; margin-left: auto; flex-wrap: wrap; }
+  .nav-links a { color: #c7d3e4; font-size: 0.95rem; font-weight: 500; }
+  .nav-links a:hover { color: var(--amber); text-decoration: none; }
+
+  /* ---------- hero ---------- */
+  header {
+    background: linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 60%, #1d3a5f 100%);
+    color: #fff; padding: 72px 0 84px;
+  }
+  .hero { display: grid; grid-template-columns: 1.05fr 1fr; gap: 48px; align-items: center; }
+  @media (max-width: 880px) { .hero { grid-template-columns: 1fr; } }
+  .hero h1 { font-size: 2.7rem; line-height: 1.15; letter-spacing: -1px; font-weight: 800; }
+  .hero h1 em { color: var(--amber); font-style: normal; }
+  .hero p.tagline { margin-top: 18px; font-size: 1.18rem; color: #b9c8dd; max-width: 34rem; }
+  .cta-row { margin-top: 30px; display: flex; gap: 14px; flex-wrap: wrap; }
+  .btn {
+    display: inline-block; padding: 12px 26px; border-radius: 8px;
+    font-weight: 700; font-size: 1rem; transition: transform 120ms ease;
+  }
+  .btn:hover { transform: translateY(-1px); text-decoration: none; }
+  .btn-amber { background: var(--amber); color: #1a1a1a; }
+  .btn-ghost { border: 1.5px solid #4a5e7c; color: #dbe5f1; }
+
+  /* ---------- code windows ---------- */
+  .code-window {
+    background: var(--code-bg); border-radius: 12px; overflow: hidden;
+    box-shadow: 0 24px 60px rgba(4, 12, 24, 0.45);
+    font-family: var(--mono); font-size: 0.83rem; line-height: 1.55;
+  }
+  .code-title {
+    display: flex; align-items: center; gap: 8px;
+    background: #16233a; padding: 9px 14px; color: #8ca3c2; font-size: 0.78rem;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .code-window pre { padding: 16px 18px; overflow-x: auto; color: #d7e3f4; }
+  .kw  { color: #79b8ff; font-weight: 600; }   /* keywords */
+  .str { color: #ffd479; }                      /* strings */
+  .cm  { color: #5d7290; font-style: italic; }  /* comments */
+  .ok  { color: #58d68d; }
+  .bad { color: #ff7b72; }
+  .dim { color: #7f93ad; }
+
+  /* ---------- sections ---------- */
+  section { padding: 72px 0; }
+  section.soft { background: var(--bg-soft); }
+  .kicker {
+    text-transform: uppercase; letter-spacing: 2px; font-size: 0.78rem;
+    font-weight: 800; color: var(--amber-dark);
+  }
+  h2 { font-size: 2rem; letter-spacing: -0.5px; margin: 8px 0 14px; }
+  .lede { font-size: 1.1rem; color: var(--body); max-width: 46rem; }
+
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; margin-top: 36px; }
+  .card {
+    background: #fff; border: 1px solid var(--border); border-radius: 12px;
+    padding: 22px;
+  }
+  .card h3 { font-size: 1.02rem; margin-bottom: 8px; }
+  .card p { font-size: 0.93rem; color: var(--body); }
+  .card code { font-family: var(--mono); font-size: 0.85em; background: var(--bg-soft); padding: 1px 6px; border-radius: 5px; }
+  .card.flag { border-top: 4px solid var(--amber); }
+
+  /* pain list */
+  .pain { list-style: none; margin-top: 28px; display: grid; gap: 14px; max-width: 46rem; }
+  .pain li { display: flex; gap: 12px; align-items: flex-start; color: var(--body); }
+  .pain .x { color: var(--red); font-weight: 800; flex-shrink: 0; }
+  blockquote {
+    margin: 36px 0 0; padding: 22px 28px; border-left: 4px solid var(--amber);
+    background: #fff; border-radius: 0 12px 12px 0; font-size: 1.12rem;
+    color: var(--ink); max-width: 46rem;
+  }
+  blockquote strong { color: var(--amber-dark); }
+
+  /* pipeline */
+  .pipeline { display: grid; gap: 10px; margin-top: 36px; max-width: 620px; }
+  .stage {
+    display: grid; grid-template-columns: 170px 1fr; gap: 16px; align-items: center;
+    background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px;
+  }
+  .stage b { font-family: var(--mono); font-size: 0.86rem; color: var(--navy); }
+  .stage span { font-size: 0.9rem; color: var(--body); }
+  .stage.hl { border-color: var(--amber); background: #fff9ec; }
+  .arrow { text-align: center; color: #9fb1c8; font-size: 0.9rem; line-height: 0.6; }
+
+  /* learn blocks */
+  .learn-item { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; padding: 30px 0; border-bottom: 1px solid var(--border); }
+  .learn-item:last-child { border-bottom: none; }
+  @media (max-width: 820px) { .learn-item { grid-template-columns: 1fr; } }
+  .learn-item h3 { font-size: 1.2rem; margin-bottom: 8px; }
+  .learn-item h3 code { font-family: var(--mono); background: var(--bg-soft); border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; font-size: 0.95em; }
+  .learn-item p { color: var(--body); font-size: 0.97rem; }
+  .learn-item .code-window { font-size: 0.8rem; }
+
+  /* terminal */
+  .term { background: var(--code-bg); border-radius: 12px; padding: 20px 24px; font-family: var(--mono); font-size: 0.88rem; color: #d7e3f4; overflow-x: auto; margin-top: 28px; }
+  .term .p { color: var(--amber); }
+  .term .c { color: #5d7290; }
+
+  /* compare */
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-top: 36px; }
+  @media (max-width: 820px) { .compare { grid-template-columns: 1fr; } }
+  .compare h3 { font-size: 1rem; margin-bottom: 10px; display: flex; gap: 8px; align-items: center; }
+
+  /* faq */
+  details {
+    background: #fff; border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 20px; margin-top: 12px;
+  }
+  details summary { font-weight: 700; cursor: pointer; }
+  details p { margin-top: 10px; color: var(--body); font-size: 0.95rem; }
+
+  /* footer */
+  footer { background: var(--navy); color: #93a7c2; padding: 44px 0; font-size: 0.9rem; }
+  footer .wrap { display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+  footer a { color: #c7d3e4; }
+  footer a:hover { color: var(--amber); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <span class="logo">vibe<span class="tilde">~</span></span>
+    <div class="nav-links">
+      <a href="#what">What</a>
+      <a href="#why">Why</a>
+      <a href="#how">How it works</a>
+      <a href="#learn">Learn</a>
+      <a href="#start">Get started</a>
+      <a href="https://github.com/your-org/vibe-lang">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<header>
+  <div class="wrap hero">
+    <div>
+      <h1>The language for <em>AI&#8209;driven</em> code maintenance.</h1>
+      <p class="tagline">
+        Stop prompting. Start specifying. Vibe turns AI code changes into
+        reviewable, verifiable engineering — with hard file boundaries and
+        mechanical acceptance checks.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-amber" href="#start">Get started</a>
+        <a class="btn btn-ghost" href="#learn">Learn Vibe in 5 minutes</a>
+      </div>
+    </div>
+    <div class="code-window">
+      <div class="code-title">
+        <span class="dot" style="background:#ff5f57"></span>
+        <span class="dot" style="background:#febc2e"></span>
+        <span class="dot" style="background:#28c840"></span>
+        &nbsp;.vibe/changes/add-search.vibe
+      </div>
+      <pre><span class="kw">change</span> <span class="str">"add product search"</span> {
+  <span class="kw">goal</span> <span class="str">"Search products by title on the home page"</span>
+
+  <span class="kw">scope</span> {
+    <span class="kw">allow</span>  <span class="str">"src/**"</span>
+    <span class="kw">forbid</span> <span class="str">"src/payments/**"</span>   <span class="cm">// never touched</span>
+  }
+
+  <span class="kw">requirements</span> {
+    <span class="str">"Search input at the top of the product list"</span>
+    <span class="str">"Search term reflected in the URL as ?q="</span>
+  }
+
+  <span class="kw">acceptance</span> {
+    <span class="str">"typing a keyword narrows the list"</span>
+    <span class="kw">run</span> <span class="str">"npm test"</span>
+  }
+
+  <span class="kw">rollback</span> <span class="kw">revert</span>
+}</pre>
+    </div>
+  </div>
+</header>
+
+<!-- ================= WHAT ================= -->
+<section id="what">
+  <div class="wrap">
+    <div class="kicker">What is Vibe?</div>
+    <h2>A Vibefile describes how AI is allowed to modify software.</h2>
+    <p class="lede">
+      Infrastructure became reliable when we stopped clicking buttons and started
+      writing files. AI coding is at the same turning point.
+    </p>
+    <div class="card-grid">
+      <div class="card"><h3><code>Dockerfile</code></h3><p>describes how a <strong>container</strong> is built — reproducibly.</p></div>
+      <div class="card"><h3><code>Makefile</code></h3><p>describes how <strong>tasks</strong> are executed — repeatably.</p></div>
+      <div class="card"><h3><code>main.tf</code></h3><p>describes how <strong>infrastructure</strong> is provisioned — declaratively.</p></div>
+      <div class="card flag"><h3><code>*.vibe</code></h3><p>describes how <strong>AI modifies your code</strong> — within boundaries, with proof.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= WHY ================= -->
+<section id="why" class="soft">
+  <div class="wrap">
+    <div class="kicker">Why it matters</div>
+    <h2>Chat is a great way to express intent — and a terrible engineering artifact.</h2>
+    <ul class="pain">
+      <li><span class="x">✕</span><span><strong>Scattered intent.</strong> Requirements live in conversation history. Nobody can review, diff, or reuse them.</span></li>
+      <li><span class="x">✕</span><span><strong>Unbounded edits.</strong> The agent decides which files to touch. “Don't break payments” is a hope, not a guarantee.</span></li>
+      <li><span class="x">✕</span><span><strong>Self-graded homework.</strong> “Done” means the agent says it's done. There is no mechanical acceptance check.</span></li>
+      <li><span class="x">✕</span><span><strong>Amnesia.</strong> Six months later, nobody knows why the code changed or what the boundaries were.</span></li>
+    </ul>
+    <blockquote>
+      As more code is written and maintained by AI, the scarce skill is no longer
+      writing code. It is <strong>specifying changes precisely enough that an AI can
+      execute them and a machine can verify them</strong>. Vibe is the language for
+      that skill.
+    </blockquote>
+    <div class="card-grid">
+      <div class="card">
+        <h3>Reviewable</h3>
+        <p>Vibefiles live in <code>.vibe/changes/</code> and go through pull-request review like any other source file.</p>
+      </div>
+      <div class="card">
+        <h3>Verifiable</h3>
+        <p>Boundaries are enforced against the actual <code>git</code> diff. Acceptance commands must exit 0. CI-gateable.</p>
+      </div>
+      <div class="card">
+        <h3>Replayable</h3>
+        <p>The history of your Vibefiles is a machine-readable intent history: who changed what, within which limits, proven how.</p>
+      </div>
+      <div class="card">
+        <h3>Agent-agnostic</h3>
+        <p>Any AI coding CLI works as the executor — Cursor, Claude Code, aider, or your own script. The contract stays the same.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= HOW ================= -->
+<section id="how">
+  <div class="wrap">
+    <div class="kicker">How it works</div>
+    <h2>Five layers. Two iron rules.</h2>
+    <p class="lede">
+      Natural language stays the fast input. The Vibefile is the engineering layer
+      beneath it — compiled deterministically, enforced mechanically.
+    </p>
+
+    <div class="pipeline">
+      <div class="stage"><b>natural language</b><span>“add search, don't touch payment code” — fast, human</span></div>
+      <div class="arrow">▼</div>
+      <div class="stage hl"><b>Vibefile</b><span>typed change intent — reviewed, versioned <em>(this is Vibe)</em></span></div>
+      <div class="arrow">▼</div>
+      <div class="stage"><b>plan + prompt</b><span>deterministic compile: same file in, same contract out</span></div>
+      <div class="arrow">▼</div>
+      <div class="stage"><b>AI executor</b><span>any agent CLI edits the code — and is <em>not trusted</em></span></div>
+      <div class="arrow">▼</div>
+      <div class="stage"><b>verifier</b><span>scope check on the real git diff + acceptance commands → CI gate</span></div>
+    </div>
+
+    <div class="card-grid" style="max-width:760px">
+      <div class="card flag">
+        <h3>Rule 1 — No LLM in the toolchain</h3>
+        <p>The compiler and verifier never call a model. Same input, same output, every single time.</p>
+      </div>
+      <div class="card flag">
+        <h3>Rule 2 — The executor is untrusted</h3>
+        <p>File boundaries are checked <em>after</em> execution against the actual diff — never assumed from the agent's self-report.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= RUN LOOP ================= -->
+<section class="soft">
+  <div class="wrap">
+    <div class="kicker">One command</div>
+    <h2><code style="font-family:var(--mono)">vibe run</code> — the whole loop.</h2>
+    <div class="compare">
+      <div>
+        <h3><span class="ok">●</span> The happy path</h3>
+        <div class="code-window"><pre><span class="dim">$</span> vibe run .vibe/changes/add-search.vibe
+
+<span class="dim">=== Attempt 1/2 ===</span>
+<span class="dim">&gt; executor edits the code...</span>
+
+Verify "add product search": <span class="ok">PASSED</span>
+Scope check: <span class="ok">OK</span>
+<span class="ok">PASS</span> (exit 0)  npm test
+
+<span class="ok">RUN PASSED</span> after 1 attempt(s).
+Review the diff and commit.</pre></div>
+      </div>
+      <div>
+        <h3><span class="bad">●</span> The agent goes rogue</h3>
+        <div class="code-window"><pre><span class="dim">$</span> vibe run .vibe/changes/add-search.vibe
+
+<span class="dim">=== Attempt 2/2 ===</span>
+Verify "add product search": <span class="bad">FAILED</span>
+Scope violations (1):
+  <span class="bad">src/payments/charge.ts</span>
+    -&gt; matches forbid <span class="str">"src/payments/**"</span>
+
+<span class="bad">RUN FAILED</span> after 2 attempt(s).
+Rollback strategy is `revert`:
+restoring tracked files...</pre></div>
+      </div>
+    </div>
+    <p class="lede" style="margin-top:26px">
+      On failure, the verify report is fed back to the agent for a retry. If every
+      attempt fails, <code style="font-family:var(--mono)">rollback revert</code> restores the tree.
+      The AI's claims don't count — <strong>the git diff does</strong>.
+    </p>
+  </div>
+</section>
+
+<!-- ================= LEARN ================= -->
+<section id="learn">
+  <div class="wrap">
+    <div class="kicker">Learn Vibe in 5 minutes</div>
+    <h2>The whole language fits in your head.</h2>
+    <p class="lede">
+      One declaration, six blocks, about a dozen keywords. If a change has no scope,
+      no requirements, or no acceptance — <strong>it does not compile</strong>. An
+      ambiguous plan is a rejected plan.
+    </p>
+
+    <div class="learn-item">
+      <div>
+        <h3>1 — <code>goal</code></h3>
+        <p>One sentence: what should be true after this change. It anchors everything else — the agent reads it first, your reviewer reads it first.</p>
+      </div>
+      <div class="code-window"><pre><span class="kw">change</span> <span class="str">"dark mode toggle"</span> {
+  <span class="kw">goal</span> <span class="str">"Users can switch the app to dark mode"</span>
+  <span class="cm">/* ... */</span>
+}</pre></div>
+    </div>
+
+    <div class="learn-item">
+      <div>
+        <h3>2 — <code>scope</code></h3>
+        <p>The hard boundary. <code>allow</code> patterns say where the AI may write; <code>forbid</code> patterns always win, even when an allow also matches. Globs: <code>**</code> crosses directories, <code>*</code> stays inside one.</p>
+      </div>
+      <div class="code-window"><pre><span class="kw">scope</span> {
+  <span class="kw">allow</span>  <span class="str">"src/ui/**"</span>
+  <span class="kw">allow</span>  <span class="str">"src/theme.ts"</span>
+  <span class="kw">forbid</span> <span class="str">"src/auth/**"</span>      <span class="cm">// forbid always wins</span>
+  <span class="kw">forbid</span> <span class="str">"prisma/**"</span>        <span class="cm">// no schema changes</span>
+}</pre></div>
+    </div>
+
+    <div class="learn-item">
+      <div>
+        <h3>3 — <code>requirements</code></h3>
+        <p>Concrete instructions, one per line. A bare string means <em>add this behavior</em>; prefix with <code>remove</code> or <code>modify</code> when intent differs. Write them like you'd brief a careful contractor.</p>
+      </div>
+      <div class="code-window"><pre><span class="kw">requirements</span> {
+  <span class="str">"Toggle button in the settings page header"</span>
+  <span class="str">"Preference persisted to localStorage"</span>
+  <span class="kw">remove</span> <span class="str">"the old high-contrast checkbox"</span>
+}</pre></div>
+    </div>
+
+    <div class="learn-item">
+      <div>
+        <h3>4 — <code>acceptance</code></h3>
+        <p>How success is proven. A bare string is a behavioral check; <code>run</code> lines are commands that must exit 0 — typecheckers, tests, builds. These run mechanically after every attempt.</p>
+      </div>
+      <div class="code-window"><pre><span class="kw">acceptance</span> {
+  <span class="str">"clicking the toggle flips the theme instantly"</span>
+  <span class="str">"the theme survives a page reload"</span>
+  <span class="kw">run</span> <span class="str">"npx tsc --noEmit"</span>
+  <span class="kw">run</span> <span class="str">"npm test"</span>
+}</pre></div>
+    </div>
+
+    <div class="learn-item">
+      <div>
+        <h3>5 — <code>constraints</code> &amp; <code>style</code> <span style="font-weight:400;color:var(--body);font-size:0.85em">(optional)</span></h3>
+        <p>Guard rails the agent must respect: dependency policy, API compatibility, design conventions. Conveyed verbatim in the agent's contract.</p>
+      </div>
+      <div class="code-window"><pre><span class="kw">constraints</span> {
+  <span class="str">"no new npm dependency"</span>
+  <span class="str">"keep the public API unchanged"</span>
+}
+<span class="kw">style</span> {
+  <span class="str">"follow the existing component patterns"</span>
+}</pre></div>
+    </div>
+
+    <div class="learn-item">
+      <div>
+        <h3>6 — <code>rollback</code> <span style="font-weight:400;color:var(--body);font-size:0.85em">(optional)</span></h3>
+        <p><code>revert</code> restores tracked files automatically when all attempts fail. <code>manual</code> leaves the changes in place for inspection. Default is manual.</p>
+      </div>
+      <div class="code-window"><pre><span class="kw">rollback</span> <span class="kw">revert</span>   <span class="cm">// or: rollback manual</span></pre></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= GET STARTED ================= -->
+<section id="start" class="soft">
+  <div class="wrap">
+    <div class="kicker">Get started</div>
+    <h2>Three commands to your first verified AI change.</h2>
+    <div class="term"><pre><span class="c"># 1. install (from a clone; npm package coming)</span>
+<span class="p">$</span> git clone https://github.com/your-org/vibe-lang &amp;&amp; cd vibe-lang
+<span class="p">$</span> npm install &amp;&amp; npm run build &amp;&amp; npm link
+
+<span class="c"># 2. scaffold .vibe/ in the repository you maintain</span>
+<span class="p">$</span> cd ~/my-project
+<span class="p">$</span> vibe init
+
+<span class="c"># 3. point it at your AI CLI and run a change</span>
+<span class="p">$</span> vibe run .vibe/changes/example.vibe</pre></div>
+    <p class="lede" style="margin-top:24px">
+      Configure any agent as the executor in <code style="font-family:var(--mono)">.vibe/config.json</code> —
+      placeholders <code style="font-family:var(--mono)">{promptFile}</code>, <code style="font-family:var(--mono)">{prompt}</code>,
+      <code style="font-family:var(--mono)">{repo}</code>. No executor configured? <code style="font-family:var(--mono)">vibe run</code>
+      prints the contract for you to paste into any AI tool, plus the verify command for afterwards.
+    </p>
+
+    <div class="card-grid">
+      <div class="card"><h3>Use Vibe for…</h3><p>Feature additions, refactors, dependency upgrades, bug fixes — any change where “don't touch X” and “prove it works” matter.</p></div>
+      <div class="card"><h3>Gate AI PRs in CI</h3><p><code>vibe verify plan.json --repo . --json</code> exits non-zero on any boundary violation or failed acceptance command.</p></div>
+      <div class="card"><h3>Collaborate through files</h3><p>Vibefiles are the shared protocol: a teammate's review of your <em>change spec</em> happens before any code is generated.</p></div>
+      <div class="card"><h3>Audit everything</h3><p><code>.vibe/changes/</code> history answers “why did this change, and who approved the boundary?” — forever.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FAQ ================= -->
+<section>
+  <div class="wrap" style="max-width:780px">
+    <div class="kicker">FAQ</div>
+    <h2>Questions, answered.</h2>
+    <details open>
+      <summary>Is this another AI code generator?</summary>
+      <p>No. Vibe's compiler and verifier contain zero AI. Vibe is the <em>contract layer around</em> AI code generation: it constrains what an agent may do and mechanically proves whether it did it. The agent is whichever tool you already use.</p>
+    </details>
+    <details>
+      <summary>Why not just write better prompts?</summary>
+      <p>A prompt is advice; a Vibefile is enforcement. Even the best prompt can't guarantee an agent stays out of <code>src/payments/</code> — the verifier checks the actual git diff after execution, and CI can refuse the merge. Prompts also can't be diffed, reviewed, or replayed six months later. Vibefiles can.</p>
+    </details>
+    <details>
+      <summary>Do I have to write Vibefiles by hand?</summary>
+      <p>Engineers review and maintain them; assistants can draft them from natural language (roadmap: schema-constrained drafting built in). Same as SQL or Dockerfiles — most people don't write them from scratch, but the system would be unmanageable without them.</p>
+    </details>
+    <details>
+      <summary>Which AI tools work as executors?</summary>
+      <p>Anything with a CLI: Cursor's agent, Claude Code, aider, or a custom script. The executor is configured per repository as a command template. Vibe hands it a deterministic contract and judges the result.</p>
+    </details>
+    <details>
+      <summary>Is my code sent anywhere?</summary>
+      <p>Not by Vibe. The toolchain is fully local and deterministic. Only your chosen executor talks to a model — under whatever terms you already accepted for that tool.</p>
+    </details>
+    <details>
+      <summary>What about behavioral checks like “clicking the toggle flips the theme”?</summary>
+      <p>Today they're emitted as a human checklist after each run; <code>run</code> commands are fully automated. Lowering behavioral checks to Playwright/E2E suites is the top roadmap item.</p>
+    </details>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <span class="logo" style="font-size:1.1rem">vibe<span class="tilde">~</span></span><br>
+      The language for AI-driven code maintenance.<br>
+      Apache-2.0 licensed.
+    </div>
+    <div>
+      <a href="https://github.com/your-org/vibe-lang">GitHub</a> ·
+      <a href="https://github.com/your-org/vibe-lang/blob/main/docs/spec.md">Language spec</a> ·
+      <a href="https://github.com/your-org/vibe-lang/blob/main/README.zh-CN.md">中文文档</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

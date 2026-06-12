@@ -1,0 +1,49 @@
+{
+  "name": "vibe-lang",
+  "version": "0.1.0",
+  "description": "A language and toolchain for AI-driven code maintenance: encode change intent, file boundaries, and acceptance criteria in versionable Vibefiles; execute them with any AI coding agent; verify the result mechanically.",
+  "keywords": [
+    "ai",
+    "vibe-coding",
+    "dsl",
+    "code-maintenance",
+    "ai-agents",
+    "langium",
+    "change-management"
+  ],
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "vibe": "./bin/vibe.js"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "langium:generate": "langium generate",
+    "build": "langium generate && tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "site": "node scripts/serve-site.mjs",
+    "vibe": "tsx src/cli.ts",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "dependencies": {
+    "langium": "^4.2.4",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.2",
+    "langium-cli": "^4.2.1",
+    "tsx": "^4.0.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.0.0"
+  }
+}
